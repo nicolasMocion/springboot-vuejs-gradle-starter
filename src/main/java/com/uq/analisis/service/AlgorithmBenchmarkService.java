@@ -70,9 +70,11 @@ public class AlgorithmBenchmarkService {
 
     private String determineComplexity(String algorithmName) {
         return switch (algorithmName) {
-            case "QuickSort", "TimSort", "HeapSort" -> "O(n log n)";
-            case "Selection Sort", "Gnome Sort", "Bubble Sort" -> "O(n^2)";
-            case "RadixSort" -> "O(nk)";
+            case "QuickSort", "TimSort", "Heap Sort", "Binary Insertion Sort", "Comb Sort" -> "O(n log n)";
+            case "Selection Sort", "Gnome Sort", "Bucket Sort", "Tree Sort" -> "O(n^2)";
+            case "Bitonic Sort" -> "O(n (log n)^2 )";
+            case "Radix Sort" -> "O(nk)";
+            case "Pigeonhole Sort" -> "O(n + r)";
             default -> "Desconocida";
         };
     }

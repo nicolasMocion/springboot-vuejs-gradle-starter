@@ -1,49 +1,49 @@
 <template>
   <div class="benchmark-container">
-    <h2>Análisis de Complejidad y Tiempos de Ejecución</h2>
+    <h2 class="tech-title">Análisis de Complejidad y Tiempos de Ejecución</h2>
 
-    <div class="controls-panel">
-      <label for="symbolSelect">Ejecutar pruebas sobre: </label>
-      <select id="symbolSelect" v-model="selectedSymbol" :disabled="loading">
+    <div class="controls-panel inner-panel">
+      <label for="symbolSelect" class="tech-label">Ejecutar pruebas sobre: </label>
+      <select id="symbolSelect" v-model="selectedSymbol" :disabled="loading" class="tech-select">
         <option v-for="sym in availableSymbols" :key="sym" :value="sym">
-          {{ sym }}
+          {{ symbolNames.get(sym) }}
         </option>
       </select>
       <button @click="runBenchmark" :disabled="loading || !selectedSymbol" class="run-btn">
-        {{ loading ? 'Ejecutando algoritmos...' : 'Iniciar Competición' }}
+        {{ loading ? 'EJECUTANDO...' : 'INICIAR COMPETICIÓN' }}
       </button>
     </div>
 
-    <div v-if="loading" class="loading">
+    <div v-if="loading" class="loading pulse-text">
       Cronometrando algoritmos en el backend (Java)...
     </div>
 
     <div v-if="results.length > 0 && !loading" class="results-wrapper">
 
-      <div class="table-container">
-        <h3>Tabla 1. Comparativa de Algoritmos</h3>
-        <table>
+      <div class="table-container inner-panel">
+        <h3 class="sub-title">Tabla 1. Comparativa de Algoritmos</h3>
+        <table class="tech-table">
           <thead>
           <tr>
-            <th>Método</th>
-            <th>Tamaño (n)</th>
-            <th>Complejidad Teórica</th>
-            <th>Tiempo (ms)</th>
+            <th>MÉTODO</th>
+            <th>TAMAÑO (n)</th>
+            <th>COMPLEJIDAD</th>
+            <th>TIEMPO (ms)</th>
           </tr>
           </thead>
           <tbody>
           <tr v-for="res in results" :key="res.algorithmName">
-            <td><strong>{{ res.algorithmName }}</strong></td>
+            <td class="highlight-text"><strong>{{ res.algorithmName }}</strong></td>
             <td>{{ res.datasetSize }}</td>
-            <td>{{ res.expectedComplexity }}</td>
+            <td class="complexity-text">{{ res.expectedComplexity }}</td>
             <td class="time-cell">{{ res.timeInMilliseconds.toFixed(3) }} ms</td>
           </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="chart-container">
-        <h3>Tiempos de Ejecución (Ascendente)</h3>
+      <div class="chart-container inner-panel">
+        <h3 class="sub-title">Tiempos de Ejecución (Ascendente)</h3>
         <div class="chart-wrapper">
           <Bar :data="chartData" :options="chartOptions" />
         </div>
@@ -54,41 +54,43 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import {ref, onMounted, reactive} from 'vue'
 import axios from 'axios'
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement, // Importante: Necesitamos BarElement para gráficas de barras
+  BarElement,
   Title,
   Tooltip,
   Legend
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
 
-// Registramos los componentes para el diagrama de barras
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const availableSymbols = ref([])
 const selectedSymbol = ref('')
 const loading = ref(false)
 const results = ref([])
+const symbolNames = reactive(new Map([
+  ["AAPL", "APPLE"], ["IBM", "IBM"], ["GC=F", "GOLD"], ["NTDOY", "NINTENDO"],
+  ["AMZN", "AMAZON"], ["TSLA", "TESLA"], ["MU", "MICRON"], ["BTC-USD", "BITCOIN"],
+  ["MSFT", "MICROSOFT"], ["EC", "ECOPETROL"], ["^N225", "NIKKEI 225"],
+  ["^DJI", "Dow Jones"], ["^NYA", "NYSE Composite Index"], ["^GSPC", "S&P 500"],
+  ["META", "META"], ["NVDA", "NVIDIA"], ["NU", "NU"],
+]))
 
 const chartData = ref({ labels: [], datasets: [] })
 const chartOptions = ref({
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { display: false } }, // Ocultamos la leyenda porque solo es una métrica
+  plugins: { legend: { display: false } },
   scales: {
-    y: {
-      beginAtZero: true,
-      title: { display: true, text: 'Milisegundos (ms)' }
-    }
+    y: { beginAtZero: true, title: { display: true, text: 'Milisegundos (ms)' } }
   }
 })
 
-// Al montar, traemos la lista de acciones disponibles
 onMounted(async () => {
   try {
     const response = await axios.get('http://localhost:8080/api/assets/symbols')
@@ -101,27 +103,22 @@ onMounted(async () => {
   }
 })
 
-// Función que dispara la carrera en Spring Boot
 const runBenchmark = async () => {
   loading.value = true
   try {
     const response = await axios.get(`http://localhost:8080/api/assets/${selectedSymbol.value}/benchmark`)
-
-    // El documento exige que el ordenamiento sea ascendente por tiempo
-    // Ordenamos el arreglo JSON usando JavaScript antes de mostrarlo
     const sortedData = response.data.sort((a, b) => a.timeInMilliseconds - b.timeInMilliseconds)
     results.value = sortedData
 
-    // Armamos los datos para la gráfica de barras
     chartData.value = {
       labels: sortedData.map(r => r.algorithmName),
       datasets: [{
         label: 'Tiempo (ms)',
-        backgroundColor: sortedData.map((_, i) => i === 0 ? '#27ae60' : '#3498db'), // El más rápido en verde, el resto en azul
+        // Rojo Dodgers para el ganador, Azul Dodgers para el resto
+        backgroundColor: sortedData.map((_, i) => i === 0 ? '#EF3E42' : '#005A9C'),
         data: sortedData.map(r => r.timeInMilliseconds)
       }]
     }
-
   } catch (error) {
     console.error("Error ejecutando el benchmark:", error)
   } finally {
@@ -131,45 +128,72 @@ const runBenchmark = async () => {
 </script>
 
 <style scoped>
-.benchmark-container {
-  width: 90vw;
-  max-width: 1200px;
-  margin: 40px auto;
-  font-family: 'Segoe UI', sans-serif;
+.benchmark-container { width: 100%; }
+
+.tech-title {
+  color: var(--dodger-blue);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 0;
+  border-bottom: 2px solid rgba(0, 90, 156, 0.1);
+  padding-bottom: 10px;
+}
+
+.sub-title {
+  color: var(--dodger-blue);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-top: 0;
+  letter-spacing: 1px;
+}
+
+.inner-panel {
+  background-color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(162, 170, 173, 0.3);
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .controls-panel {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border: 1px solid #e1e4e8;
-  margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 15px;
+  margin-bottom: 20px;
 }
 
-select {
+.tech-label { font-weight: 600; color: var(--text-dark); }
+
+.tech-select {
   padding: 8px 12px;
   border-radius: 4px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
+  border: 1px solid var(--dodger-blue);
+  background-color: transparent;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
+  color: var(--dodger-blue);
+  outline: none;
 }
+
+.tech-select:focus { box-shadow: 0 0 8px var(--blue-glow); }
 
 .run-btn {
-  background-color: #2c3e50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
+  background-color: var(--dodger-blue);
+  color: var(--dodger-white);
+  border: 1px solid transparent;
+  padding: 10px 24px;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background 0.2s;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
 }
 
-.run-btn:hover:not(:disabled) { background-color: #1a252f; }
-.run-btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
+.run-btn:hover:not(:disabled) {
+  background-color: var(--dodger-red);
+  box-shadow: 0 0 15px rgba(239, 62, 66, 0.5);
+  transform: translateY(-2px);
+}
+.run-btn:disabled { background-color: var(--dodger-silver); cursor: not-allowed; }
 
 .results-wrapper {
   display: grid;
@@ -177,48 +201,19 @@ select {
   gap: 20px;
 }
 
-.table-container, .chart-container {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border: 1px solid #e1e4e8;
-}
+.tech-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.tech-table th, .tech-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(162, 170, 173, 0.2); }
+.tech-table th { background-color: var(--dodger-blue); color: var(--dodger-white); font-weight: 600; }
+.tech-table tr:hover { background-color: rgba(0, 90, 156, 0.05); }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
+.highlight-text { color: var(--dodger-blue); }
+.complexity-text { font-family: monospace; color: var(--dodger-silver); font-weight: bold; }
+.time-cell { font-family: monospace; font-size: 1.1rem; color: var(--dodger-red); text-align: right; font-weight: bold; }
 
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
+.chart-wrapper { height: 300px; margin-top: 15px; }
 
-th { background-color: #f8f9fa; color: #2c3e50; }
+.pulse-text { animation: parpadeo 1.5s infinite; color: var(--dodger-blue); font-weight: bold; }
+.loading { text-align: center; padding: 40px; font-size: 1.2rem; }
 
-.time-cell {
-  font-family: monospace;
-  font-size: 1.1rem;
-  color: #e74c3c;
-  text-align: right;
-}
-
-.chart-wrapper {
-  height: 300px;
-  margin-top: 15px;
-}
-
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #7f8c8d;
-  font-size: 1.2rem;
-}
-
-@media (max-width: 768px) {
-  .results-wrapper { grid-template-columns: 1fr; }
-}
+@media (max-width: 768px) { .results-wrapper { grid-template-columns: 1fr; } }
 </style>
