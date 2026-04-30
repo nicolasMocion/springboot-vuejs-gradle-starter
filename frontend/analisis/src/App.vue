@@ -1,31 +1,48 @@
 <script setup>
-// Nota: reactivo no se está usando en este snippet, lo quité para evitar advertencias si no lo usas.
-import StockChart from './components/StockChart.vue'
-import AlgorithmBenchmark from './components/AlgorithmBenchmark.vue'
-import TopVolume from './components/TopVolume.vue'
+import { ref } from 'vue'
+import SimilarityAnalysis from './components/SimilarityAnalysis.vue'
+import RiskAndPatternAnalysis from './components/RiskAndPatternAnalysis.vue'
+import MarketDashboard from './components/MarketDashboard.vue'
+import StockChart from "@/components/StockChart.vue";
+
+const activeTab = ref('dashboard')
 </script>
 
 <template>
   <div id="app">
     <header class="dodgers-header">
       <div class="header-content">
-        <h1><span class="tech-prefix">OMAR </span> STOCKS <span class="dodger-dot">.</span></h1>
+        <h1><span class="tech-prefix">CYBER</span> ANALYTICS <span class="dodger-dot">.</span></h1>
         <p class="subtitle">Análisis Algorítmico de Mercados Financieros</p>
       </div>
+
+      <!-- Pestañas de Navegación -->
+      <nav class="nav-tabs">
+        <button :class="{ active: activeTab === 'stock' }" @click="activeTab = 'stock'">Stock chart </button>
+        <button :class="{ active: activeTab === 'dashboard' }" @click="activeTab = 'dashboard'">Dashboard</button>
+        <button :class="{ active: activeTab === 'similarity' }" @click="activeTab = 'similarity'">Similitud</button>
+        <button :class="{ active: activeTab === 'risk' }" @click="activeTab = 'risk'">Riesgo y Patrones </button>
+      </nav>
+
       <div class="dodger-red-line"></div>
     </header>
 
     <main class="dashboard-main">
-      <section class="chart-section card-futurista">
-        <StockChart />
+
+      <section v-if="activeTab === 'stock'" class="card-futurista">
+        <StockChart/>
       </section>
 
-      <section class="benchmark-section card-futurista">
-        <AlgorithmBenchmark />
+      <section v-if="activeTab === 'dashboard'" class="card-futurista">
+        <MarketDashboard/>
       </section>
 
-      <section class="volume-section card-futurista">
-        <TopVolume />
+      <section v-if="activeTab === 'similarity'" class="card-futurista">
+        <SimilarityAnalysis/>
+      </section>
+
+      <section v-if="activeTab === 'risk'" class="card-futurista">
+        <RiskAndPatternAnalysis/>
       </section>
     </main>
 
@@ -205,4 +222,44 @@ body {
   .dashboard-main { padding: 20px 10px; gap: 20px; }
   .card-futurista { padding: 15px; }
 }
+
+/* Nuevos estilos para las pestañas de navegación */
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  position: relative;
+  z-index: 10; /* Asegura que sean cliqueables por encima del fondo */
+}
+
+.nav-tabs button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--dodger-silver);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--dodger-white);
+}
+
+.nav-tabs button.active {
+  background-color: var(--dodger-white);
+  color: var(--dodger-blue);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  border-color: var(--dodger-white);
+}
+
+
+
+
 </style>
