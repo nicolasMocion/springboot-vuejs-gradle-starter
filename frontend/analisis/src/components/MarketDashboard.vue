@@ -117,7 +117,7 @@ onMounted(async () => {
 const fetchMatrix = async (symbolsArray) => {
   loadingMatrix.value = true
   try {
-    const res = await axios.post('/api/similarity/matrix', symbolsArray)
+    const res = await axios.post('https://seguimiento1analisisnicolasosoriosantiagona-production.up.railway.app/api/similarity/matrix', symbolsArray)
     const matrixData = res.data
 
     const series = []
