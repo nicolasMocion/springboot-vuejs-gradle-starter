@@ -131,11 +131,11 @@ const runComparison = async () => {
     const cleanSymA = encodeURIComponent(symbolA.value.trim())
     const cleanSymB = encodeURIComponent(symbolB.value.trim())
 
-    // Hacemos 3 peticiones en paralelo: Las métricas, los datos históricos de A, y los de B
+
     const [simRes, dataARes, dataBRes] = await Promise.all([
-      axios.get(`https://seguimiento1analisisnicolasosoriosantiagona-production.up.railway.app/api/similarity/compare?symbolA=${cleanSymA.value}&symbolB=${cleanSymB.value}`),
-      axios.get(`https://seguimiento1analisisnicolasosoriosantiagona-production.up.railway.app/api/assets/${cleanSymA.value}`),
-      axios.get(`https://seguimiento1analisisnicolasosoriosantiagona-production.up.railway.app/api/assets/${cleanSymB.value}`)
+      axios.get(`https://seguimiento1analisisnicolasosoriosantiagona-production.up.railway.app/api/similarity/compare?symbolA=${cleanSymA}&symbolB=${cleanSymB}`),
+      axios.get(`https://seguimiento1analisisnicolasosoriosantiagona-production.up.railway.app/api/assets/${cleanSymA}`),
+      axios.get(`https://seguimiento1analisisnicolasosoriosantiagona-production.up.railway.app/api/assets/${cleanSymB}`)
     ])
 
     results.value = simRes.data
