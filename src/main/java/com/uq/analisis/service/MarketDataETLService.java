@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +43,7 @@ public class MarketDataETLService {
 
                 // Carga masiva a la base de datos
                 repository.saveAll(assets);
-                log.info("Se guardaron {} registros para {}", assets.size(), symbol);
+                log.info("Se guardaron {} registros estandarizados en USD para {}", assets.size(), symbol);
 
                 // IMPORTANTE: Pausa para no saturar APIs públicas (Rate Limiting)
                 Thread.sleep(2000);
@@ -79,7 +78,12 @@ public class MarketDataETLService {
             return new ArrayList<>(); // Retorna lista vacía si no hay datos
         }
 
+        // 1. Definimos la tasa de cambio y la bandera de conversión
+        double jpyToUsd = 0.0064; // 1 Yen = 0.0064 Dólares (Aprox)
+        boolean isJapaneseAsset = symbol.equals("^N225");
+
         for (int i = 0; i < timestamps.size(); i++) {
+            // Ignorar días nulos (feriados de bolsa)
             if (opens.get(i).isNull() || closes.get(i).isNull()) {
                 continue;
             }
@@ -89,13 +93,28 @@ public class MarketDataETLService {
                     .atZone(java.time.ZoneId.systemDefault())
                     .toLocalDate();
 
+            // 2. Extraemos los valores crudos a variables intermedias
+            double rawOpen = opens.get(i).asDouble();
+            double rawHigh = highs.get(i).asDouble();
+            double rawLow = lows.get(i).asDouble();
+            double rawClose = closes.get(i).asDouble();
+
+            // 3. APLICAMOS LA CONVERSIÓN SI ES NECESARIA
+            if (isJapaneseAsset) {
+                rawOpen = rawOpen * jpyToUsd;
+                rawHigh = rawHigh * jpyToUsd;
+                rawLow = rawLow * jpyToUsd;
+                rawClose = rawClose * jpyToUsd;
+            }
+
+            // 4. Construimos el objeto usando las variables procesadas
             FinancialAsset asset = FinancialAsset.builder()
                     .symbol(symbol)
                     .date(date)
-                    .open(opens.get(i).asDouble())
-                    .high(highs.get(i).asDouble())
-                    .low(lows.get(i).asDouble())
-                    .close(closes.get(i).asDouble())
+                    .open(rawOpen)
+                    .high(rawHigh)
+                    .low(rawLow)
+                    .close(rawClose)
                     .volume(volumes.get(i).asLong())
                     .build();
 
